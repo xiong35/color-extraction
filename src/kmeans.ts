@@ -1,4 +1,4 @@
-import { getDataList, ImgPixels, mainColorNumber, PixelData, rgb2Hex } from "./shared.ts";
+import { getDataList, mainColorNumber, PixelData, rgb2Hex } from "./shared.ts";
 
 /** 原始数据集, 保存了4个 ImgPixels 数组*/
 const dataList = await getDataList();
@@ -29,7 +29,7 @@ let startCenters: PixelData[] = new Array(mainColorNumber)
  *    (4) 重复步骤 (1), 直至收敛(每个质心迭代后改变的距离均小于 minDist)或达到最大迭代次数iterations
  */
 let iterations = 20;
-const minMoveDist = 25;
+const minMoveDist = 20;
 /** 计算距离的方法: 将 r,g,b 分别作为空间坐标系的 x,y,z, 计算两点的欧式距离即可 */
 function calcDist(pix1: PixelData, pix2: PixelData): number {
   return pix1.reduce(
@@ -44,21 +44,21 @@ type PixBelongingToCenter = PixelData[];
 dataList.forEach((data, index) => {
   console.log(`\n*** processing img ${index + 1} ***\n`);
 
+  let center2Cluster: PixBelongingToCenter[] = new Array(
+    mainColorNumber
+  ).fill(0);
   while (iterations--) {
     /***** 归类 *****/
-    const center2Cluster: PixBelongingToCenter[] = new Array(
-      mainColorNumber
-    )
-      .fill(0)
-      .map(() => []);
+    center2Cluster = center2Cluster.map(() => []);
     data.forEach((pixel) => {
       // 对每个像素计算距离哪个质心最近
       const closestCenterIndex = startCenters.reduce(
         (prev, curCenter, centerIndex) => {
           const dist = calcDist(curCenter, pixel);
+
           return dist < prev.dist ? { centerIndex, dist } : prev;
         },
-        { centerIndex: -1, dist: -Infinity } // 当前距离最近的中心的号码和距离
+        { centerIndex: -1, dist: Infinity } // 当前距离最近的中心的号码和距离
       ).centerIndex;
       // 将它加入最近的质心的数组中
       center2Cluster[closestCenterIndex].push(pixel);
@@ -80,7 +80,7 @@ dataList.forEach((data, index) => {
           )
           .map(
             // 将结果取平均即为新中心
-            (totalChannel) => totalChannel / cluster.length
+            (totalChannel) => ~~(totalChannel / cluster.length)
           ) as PixelData
     );
 
@@ -101,6 +101,33 @@ dataList.forEach((data, index) => {
     /***** 更新 *****/
     startCenters = newStartCenters;
   }
-});
+  // 将中心点按 所被归类到的像素点个数 排序
+  startCenters = startCenters
+    .map((pixel, index) => ({
+      pixel,
+      childrenCount: center2Cluster[index].length,
+    }))
+    .sort((a, b) => b.childrenCount - a.childrenCount)
+    .map((obj) => obj.pixel);
 
-console.log(startCenters.map(rgb2Hex));
+  // 打印结果
+  console.log(startCenters.map(rgb2Hex));
+
+  /* 
+    *** processing img 1 ***
+
+    [ "#0a0b1a", "#212839", "#61666e", "#bdb2a5" ]
+
+    *** processing img 2 ***
+
+    [ "#493f45", "#a7b6b6", "#86676f", "#1b1b1b" ]
+
+    *** processing img 3 ***
+
+    [ "#4a3f55", "#1e1928", "#916672", "#e0bda3" ]
+
+    *** processing img 4 ***
+
+    [ "#ad1627", "#791528", "#361f32", "#998c7c" ]
+  */
+});
