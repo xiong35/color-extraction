@@ -38,7 +38,7 @@ function cutIntoTwo(data: PixelData[]): [ToCut, ToCut] {
     }
   });
 
-  // 根据 r/g/b 切分
+  // 找到最长边, 以此判断根据 r or g or b 来切分
   let cutBy = -1,
     maxEdge = -Infinity;
   for (let i = 0; i < 3; i++) {
