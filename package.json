@@ -1,0 +1,8 @@
+{
+  "name": "color-extraction",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "repository": "git@github.com:xiong35/color-extraction.git",
+  "author": "xiong35 <56919869+xiong35@users.noreply.github.com>",
+  "license": "MIT"
+}
