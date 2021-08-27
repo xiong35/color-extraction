@@ -6,9 +6,7 @@ export type ImgPixels = PixelData[];
 export async function getDataList(): Promise<ImgPixels[]> {
   const dataList: ImgPixels[] = [];
   for (let i = 0; i < 4; i++) {
-    const json = await Deno.readTextFile(
-      `imgs/test/imgData${i + 1}.json`
-    );
+    const json = await Deno.readTextFile(`../imgs/test/imgData${i + 1}.json`);
     const data = JSON.parse(json) as ImgPixels;
     dataList.push(data);
   }
